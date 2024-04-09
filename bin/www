@@ -8,14 +8,16 @@
 // var debug = require('debug')('server-semina-bc:server');
 // var http = require('http');
 
-import app from "../app.js";
 import debug from "debug";
 import http from 'http';
+import app from "../app.js";
+import dbMongoose from "../app/db/index.js";
+import configEnv from "../app/utils/config.js";
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(configEnv.portServer || '3000');
 app.set('port', port);
 
 console.info(`running on port ${port}`);
@@ -24,15 +26,25 @@ console.info(`running on port ${port}`);
  * Create HTTP server.
  */
 
+dbMongoose.on('error', function (err) {
+  console.info('connection error: tidak bisa tersambung ke mongodb', err);
+});
+
 var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+dbMongoose.on('open', function () {
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+});
+
+// server.listen(port);
+// server.on('error', onError);
+// server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.
