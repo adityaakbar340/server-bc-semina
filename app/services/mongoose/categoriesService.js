@@ -3,8 +3,10 @@ import { errorNotFound, requestBadError } from "../../errors/index.js";
 
 const categoriesSevrice = {};
 
-categoriesSevrice.getAllCategories = async () => {
-  const result = await Categories.find();
+categoriesSevrice.getAllCategories = async (req) => {
+  const result = await Categories.find({ organizer: req.user.organizer }).populate(
+    { path: 'organizer', select: '_id organizer' }
+  );
 
   return result;
 };
@@ -12,11 +14,11 @@ categoriesSevrice.getAllCategories = async () => {
 categoriesSevrice.createCategories = async (req) => {
   const { name } = req.body;
 
-  const checkNameIsExists = await Categories.findOne({ name });
+  const checkNameIsExists = await Categories.findOne({ name, organizer: req.user.organizer });
 
   if (checkNameIsExists) throw new requestBadError('Kategori nama duplikats');
 
-  const result = await Categories.create({ name });
+  const result = await Categories.create({ name, organizer: req.user.organizer });
 
   return result;
 };
@@ -63,6 +65,14 @@ categoriesSevrice.deleteCategories = async (req) => {
   if (!result) throw new errorNotFound(`Tidak ada kategori dengan id: ${id}`);
 
   await result.deleteOne();
+
+  return result;
+};
+
+categoriesSevrice.checkingCategories = async (id) => {
+  const result = await Categories.findOne({ _id: id });
+
+  if (!result) throw new errorNotFound(`Tidak ada kategori dengan id : ${id}`);
 
   return result;
 };
